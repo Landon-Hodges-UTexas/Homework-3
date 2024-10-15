@@ -1,0 +1,73 @@
+---
+title: "Homework 3"
+author: "Landon Hodges"
+date: "2024-10-02"
+output: 
+  html_document:
+    theme: journal
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(tidyverse)
+principals <- tibble(read.csv('Homework3_principals.csv'))
+ratings <- tibble(read.csv('Homework3_ratings.csv'))
+tvSeries <- tibble(read.csv('Homework3_tvSeries.csv'))
+```
+
+## **Years on the air**
+#### A little "plus one" makes the stats go down easier
+
+```{r}
+tvSeries_finished <- tvSeries[!is.na(tvSeries$endYear),]
+tvSeries_finished$yearsRun <- tvSeries_finished$endYear-tvSeries_finished$startYear + 1
+ggplot(tvSeries_finished) + geom_bar(aes(x=yearsRun), fill = 'coral', col = 'black') + xlab('Years on the Air') + ylab('# of Shows') + scale_x_continuous(breaks = c(1:9)) + labs(title = "TV Series' Years on Air") + theme_minimal()
+```
+
+Above is a graph of all the terminated shows in the dataset. The height of each bar indicates the number of shows that were on the air for that number of years. 
+
+**Note** that a show which began in December 2012 and terminated in January 2013 will be represented in the 2 year airtime collumn, while a show running February 2016-November 2016 will be in the 1 year airtime collumn, because the year is the only accessible data.
+
+`r sum(tvSeries_finished$yearsRun == 1)` of the shows only ran for one year, ending the same year they began.
+
+## **Ratings**
+#### And the delight of subsetting
+
+```{r}
+tvSeries_ratings <- inner_join(tvSeries, ratings, by='tconst')
+highRated <- filter(tvSeries_ratings, averageRating >= 9, numVotes >= 20000)
+highRated <- arrange(highRated, primaryTitle)
+highRated[,3]
+```
+Listed above in alphabetical order are the shows rated above a 9/10 with more than 20,000 reviews.
+
+`r round(length(tvSeries_ratings$tconst)/length(tvSeries$tconst),4)*100`% of shows had rating data.
+
+## **People**
+#### Featuring my boxplot addiction
+
+```{r}
+principals_tvSeries <- inner_join(principals,tvSeries,by='tconst')
+principals_tvSeries$startAge <- principals_tvSeries$startYear - principals_tvSeries$birthYear
+
+ggplot(principals_tvSeries) + geom_boxplot(aes(x=startAge, y=fct_reorder(category, startAge, .fun = median), fill = category), show.legend = FALSE) + scale_x_continuous(breaks = c(0:11*10)) + labs(x='Age at Premiere', y='Role in Cast or Crew', title = 'Average Ages of Principals by their Roles') + theme_minimal()
+```
+
+The boxplot above illustrates the median ages of writers, actors, actresses, and TV personalities/contestants at the first airing of the series they feature in. The median age of actresses is lower than actors, which is lower than writers, with 75% of actresses being younger than the average writer at the time of the premiere.
+
+For fun: using only the hyperlinks on the imdb page, how many click does it take you to get to Tom Cruise's's IMDb page from Pedro Pascal's?
+
+## **Reflection on Project 1**
+
+#### Question 4
+
+I used the music album dataset, because I enjoy considering the less artisitc and more empirical aspects of all the arts, but especially music, since it has such a large capitalist impact. I chose the predictors of Genre, Release Year, and Weeks on the Billboard Charts as predictors of Spotify popularity. I chose these because I expected them to be correlated, since spotify has primarily younger listeners, genres like rap would be more popular, and more recent release years would be more popular as well. Also, since time on the billboard charts likely indicated replayability, the mosst loopable songs would also be popular on spotify, where they get put in playlists to be listened to over and over.
+
+#### Question 5
+
+I encountered an issue when trying to select which graphs to use in my visualizations, because I keep trying to work a ridgeline plot into one of these projects, even when it really isn't called for. I ended up using a boxplot, and I'll probably waste less time deliberating in the future. What I've learned though, is that it's about presenting the data clearly and concisely, not showing off that I spent a lot of time on the ggplot website.
+
+#### Question 6
+
+As a musician, my first instinct when analyzing the data was to look for an artistic variable's correlation with success, by analyzing the genre. But if a non-musician looked at the dataset, they may be more inclined to disect the more obvious societal correlations, such as the peak billboard position.
+
